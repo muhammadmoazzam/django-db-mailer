@@ -11,7 +11,7 @@ try:
 except ImportError:
     from django.urls import reverse
 
-from django.conf.urls import url
+from django.urls import path, re_path
 from django.contrib import messages
 from django.contrib import admin
 
@@ -154,27 +154,21 @@ class MailTemplateAdmin(TranslationModelAdmin):
 
     def get_urls(self):
         urls = super(MailTemplateAdmin, self).get_urls()
+
         admin_urls = [
-            url(
-                r'^(\d+)/sendmail/$',
-                self.admin_site.admin_view(self.send_mail_view),
-                name='send_mail_view'
-            ),
-            url(
-                r'^(\d+)/sendmail/apps/(.*?)/(.*?)/',
+            path('<int:pk>/sendmail/', self.admin_site.admin_view(self.send_mail_view), name='send_mail_view'),
+            
+            re_path(
+                r'^(?P<pk>\d+)/sendmail/apps/(?P<app_label>.*?)/(?P<model_name>.*?)/$',
                 self.admin_site.admin_view(self.browse_model_fields_view),
-                name='browse_model_fields_view'),
-            url(
-                r'^(\d+)/sendmail/apps/',
-                self.admin_site.admin_view(self.get_apps_view),
-                name='send_mail_apps_view'
+                name='browse_model_fields_view'
             ),
-            url(
-                r'^reset/cache/',
-                self.admin_site.admin_view(self.clean_cache_view),
-                name='clean_cache_view'
-            ),
+
+            path('<int:pk>/sendmail/apps/', self.admin_site.admin_view(self.get_apps_view), name='send_mail_apps_view'),
+
+            path('reset/cache/', self.admin_site.admin_view(self.clean_cache_view), name='clean_cache_view'),
         ]
+
         return admin_urls + urls
 
     def get_readonly_fields(self, request, obj=None):
